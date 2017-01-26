@@ -6,7 +6,7 @@ output: html_document
 ---
 
 
-# "Introduction to Open Data Science, Spring 2017, University of Helsinki"
+# Introduction to Open Data Science, Spring 2017, University of Helsinki
 
 
 
