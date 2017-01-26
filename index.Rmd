@@ -1,4 +1,5 @@
 ---
+author: "Neli Noykova"
 title: "IODS course project"
 output:
   html_document:

@@ -1,4 +1,16 @@
 
-# About the project
+# Introduction to Open Data Science
 
-*Write a short description about the course and add a link to your github repository here. This is an R markdown (.Rmd) file so you can use R markdown syntax. See the 'Useful links' page in the mooc area (chapter 1) for instructions.*
+This course is a brief introduction to data science - what to do with the big amount of data, how to model them and extract important information, which could be used later on for analyses and predictions. 
+The course will teach us how to use GitHUb (system for version control) to share results. The modeling of data will be performed using R. 
+
+##1. Tools and methods for open and reproducible research
+
+First step is to learn basic GitHub commands as fork, copy, commit. We have to make our first steps in R as well. The goal of creating this document is to learn how to create markdown documents and share them on the net using GitHub.
+
+Here is a link to to the GitHub page, related to my work on this course: 
+
+https://github.com/noykova/IODS-project
+
+
+*Write a short description about the course and add a link to your github repository here. This is an R markdown (.Rmd) file so you can use R markdown syntax. See the 'Useful links' page in the mooc area (chapter 1) for instructions.*h 

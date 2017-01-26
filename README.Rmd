@@ -1,0 +1,31 @@
+---
+title: "README"
+author: "Neli Noykova"
+date: "January 26, 2017"
+output: html_document
+---
+---
+title: "Introduction to Open Data Science, Spring 2017, University of Helsinki"
+output: github_document
+---
+
+
+## Goals of the course 
+
+During this course we will learn how to use the basics about joint usage of GitHub and R in order to provide efficently data modeling and analysis, make reasonable conclusions about the information extracted from the data and some model predictions. 
+We will achieve the stated goals by providing extensive team work via discussions and reviews. 
+
+### About this document 
+
+This is so called R Markdown document, created in R Studio (package Rmarkdown should be installed). 
+This is a very useful tool for reporting results because it gives an opportunity to combine plain text with explanations, R code and its output results, tables and LaTex formulas in only one document.  
+
+R Markdown format is used for publishing markdown documents to GitHub. When clicking the **Knit** button in R Studio (graphical environment for programming using R) all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
+
+### Link to my course diary
+
+Here is the link to my course diary:
+
+https://noykova.github.io/IODS-project/
+
+
