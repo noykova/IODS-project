@@ -1,8 +1,4 @@
----
-output:
-  html_document: default
-  pdf_document: default
----
+
 # Regression and model validation
 
 ##1. Reading the data 
@@ -19,7 +15,7 @@ The wrangling includes the following changes:
 
 Thus the data set, used in this analysis, includes 166 observations of the following variables: gender,age, attitude, deep, stra, surf and points, where gender and age are the gender (F/M) and age of the students, and collected points>0.  
 
-The R code about wrangling described above is given [here](https://github.com/noykova/IODS-project/blob/master/Data/create_learning2014.R.R)
+The R code about wrangling described above is given [here](https://github.com/noykova/IODS-project/blob/master/Data/create_learning2014.R)
 
 The data are read using the following command:
 
@@ -70,7 +66,7 @@ If **lower (or upper or diagonal)** lists are supplied, the **combo** option sho
 
 This code produce the following plot: 
 
-```{r}
+```{r fig.width=8, fig.height=6}
 p
 ```
 
@@ -157,7 +153,7 @@ R-Squared can be graphically illustrated via plots of observed responses Versus 
 
 For single regression this plot is:
 
-```{r}
+```{r scatterplot, fig.width=8, fig.height=6}
 library(lattice)
 xyplot(points ~ attitude, lrn14, grid = TRUE,
        scales = list(x = list(log = 10, equispaced.log = FALSE)),
