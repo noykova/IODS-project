@@ -1,7 +1,223 @@
-# Insert chapter 2 title here
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+# Regression and model validation
 
-*Describe the work you have done this week and summarize your learning.*
+##1. Reading the data 
 
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using  
+Here we use part of the sociological data described [here](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-meta.txt). The data concern learning process of students. The full data consists of 183 observations of 60 variables. After wrangling the data into a format that is easy to analyze we have obtained 166 observations of 7 variables. 
+
+The wrangling includes the following changes: 
+
+1. The column Attitude in original data is a sum of 10 questions related to students attitude towards statistics, each measured on the Likert scale (1-5). Here we have scaled the combination variable back to the 1-5 scale.
+
+2. Next multiple questions are combined into combination variables so that tree groups of questions related to deep, surface and strategic learning are formed. The columns deep, surf and stra are formed by averaging the corresponding groups of questions. 
+
+3. In the original data the variable 'points' denotes the student exam points in a statistics course exam. If the student did not attend an exam, the value of 'points' will be zero. These observations are removed from the data.
+
+Thus the data set, used in this analysis, includes 166 observations of the following variables: gender,age, attitude, deep, stra, surf and points, where gender and age are the gender (F/M) and age of the students, and collected points>0.  
+
+The R code about wrangling described above is given [here](https://github.com/noykova/IODS-project/blob/master/Data/create_learning2014.R.R)
+
+The data are read using the following command:
+
+```{r}
+lrn14 <- read.table("learning2014.txt", header=TRUE)
+dim(lrn14)
+str(lrn14)
+
+```
+
+## 2. Graphical overview of the data and summaries of the variables
+
+Access the GGally and ggplot2 libraries
+
+```{r}
+
+library(GGally)
+library(ggplot2)
+```
+
+Next we create a more advanced plot matrix with ggpairs()
+The purpose of this function is to display two grouped data in a plot matrix. Analysis of this plot is used for roughly determining if we have a linear correlation between data. 
+
+```{r}
+p <- ggpairs(lrn14, mapping = aes(col=gender, alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))
+```
+
+In this function the elements are: 
+
+**mapping** is an aestetic mapping between variables
+**aes** - defines how the variables in the data are mapped via parameters in geom_bar
+
+**col** should be a categorical variable, for which different colors are used.
+
+**alpha** - for large datasets with overlapping the alpha aestetic will make the points more transparent. 
+
+**lower (or upper)** are lists that may contain the variables continuous, combo, discete or na. Each element may be a function or a string. 
+
+**combo** - this option is used either continuous X and categorical Y or categorical X and continuous Y. It could take values box, box-no-facet, dot, dot-no-facet, facetist, facet density, blank. 
+
+If **lower (or upper or diagonal)** lists are supplied, the **combo** option should be presented using a **function(data, mapping)**. If a specific function **fn** needs its parameter set, then the function with its parameters should be of the form **wrap(fn, param1 = val1, param2 = val2)**
+
+**facets** - create a subplot of each group and draw the subplots side by side. 
+
+**facets_wrap** - subplots are paid out horizontally and wrap around. 
+
+**stat_bin** - bins (binwidth) are bars used for representation of categorical data. By default **bins** are 1/30 of the range of data. 
+
+This code produce the following plot: 
+
+```{r}
+p
+```
+
+The graphs on the diagonal reflect the marginal distributions of the variables.
+
+On the first top row the boxplot of the categorical variable gender depending on each of the other corresponding variables is shown. The marginal distribution of gender shows that the observed female students group is bigger, while male students tend to be a little older, have higher attitude and get a little bit better points. 
+
+The histograms in first column represent dependence of points, surf, stra, deep, attitude and age on categorical variable gender for its two values (M/F) separately. 
+
+The scatter plots under the diagonal represent the dependence of each pair of corresponding variables. As the matrix is symmetric, on the upper part of it the correlation coefficients for every pair and also separated by gender M/F are calculated and shown. 
+
+From the graphics of diaconal elements we see that the marginal distribution of variables stra and deep are very near to normal. 
+
+Thus we can make a hypothesis that the variable points depends on attitude (Cor = 0.437), stra (Cor = 0.146), and surf(Cor = -0.144) because the absolute value of the correlation coefficient is higher for these variables. 
+
+In order to exclude the effect of multicollinearity during next step of multiple regression we check the correlations among the pairs variables, which are candidates for dependen variables. 
+If variables are correlatd, it becomes very difficult for the model to determine the true effect of independent variables on dependent variable. 
+
+From the matrix plot above we observe that Cor(stra, attitude) = 0.0617, Cor(surf,attitude) = -0.176 (quite significant), and Cor(stra,surf) = -0.161 (quite significant). Usually, correlation above 80%  (subjective assumption) is considered higher. Therefore at thi stage we do not consider for removing any variable. 
+ 
+
+
+## 3. Multiple regression: summary of results, analyses, conclusions. 
+
+Regression is a parametric technique used to predict continuous (dependent) variable given a set of independent variables. Mathematically regression uses a linear function to approximate the dependent variable. When there is one dependent variable, we use simple regression. In this task we have to use 3 different dependent variables, which address the problem to multiple regression. 
+
+The function lm in R is used for linear reglession. 
+We create a regression model with multiple explanatory variables attitude, stra, surf. The choice of independent variables is based on the analysis in 2. Points is chosen as dependent variable. 
+
+```{r}
+my_model <- lm(points ~ attitude + stra + surf, data = lrn14)
+```
+
+Print the summary of the model:
+
+```{r}
+summary(my_model)
+```
+
+
+From this statistic we observe that the residuals median is quite high(0.51). If the residuals are normally distributed, this indicates that the mean of the difference between the predictions and actual values is close to 0. 
+
+Next we analyse the parameter estimates and their standard errors. The intersect is beta0 value. It's prediction is made by model when all independent variables are set to 0. 
+We observe that the standard error of regression coefficient for surf is bigger than the parameter estimate itself. Also the standard error of regression coefficient for stra is relatively high. 
+
+The last column pf coefficients statistics show the p-value for the corresponding regression coefficient. When p values < 0.05 it is assumed that the corresponding coefficient is significant. We observe p>0.05 for regression coefficients for stra and surf. 
+
+From the analysis of the statistics we observe that variables surf and stra could be excluded from the model. 
+
+Next perform multiple regression for two variables. 
+First include (attitude, stra), and  next - (attitude,surf)
+
+Finally we provide simple regression excluding both stra and surf variables. 
+
+```{r}
+
+my_model21 <- lm(points ~ attitude + stra, data = lrn14)
+
+summary(my_model21)
+
+my_model22 <- lm(points ~ attitude + surf, data = lrn14)
+
+summary(my_model22)
+
+my_model1 <- lm(points ~ attitude, data = lrn14)
+
+summary(my_model1)
+
+```
+
+From the summary of last 3 models we conclude that the multiple regression points ~ attitude + stra could be chosen as pretty good model. 
+Adding the regression coefficient for stra has a little bigger than boundary p value = 0.05, because of which we can include in the multiple regression. On the other hand the standard deviatoon of the estimate is quite big. But F-statistic shows higher value and lower p-value. We remember that the correlation between attitude and stra according the pair plot matrix is low.  
+
+Therefore we decide to continue with both simple (points ~ attitude) and multiple (points ~ attitude + stra) regression models. 
+
+
+## 4. Analyses and interpretation of the model parameters and the multiple R squared of the model. 
+
+Interpretation of model parameters was provided above, in  section 3. 
+
+R Square (Coefficient of Determination) is a metric used to determine goodness of model fit. This metric explains the percentage of variance explained by covariates in the model. It ranges between 0 and 1. Usually, higher values are desirable but it depends on the data quality and domain. For example, if the data is noisy, we can accept a model at low R Square values.
+
+R-Squared can be graphically illustrated via plots of observed responses Versus fitted responses. 
+
+For single regression this plot is:
+
+```{r}
+library(lattice)
+xyplot(points ~ attitude, lrn14, grid = TRUE,
+       scales = list(x = list(log = 10, equispaced.log = FALSE)),
+       type = c("p", "r"), col.line="red")
+```
+
+
+## 5. Diagnostic plots: Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage.  Model assumptions and their validity
+
+Next we check residual plots and try to understand the pattern and derive actionable insights. 
+
+Set graphic output: 
+```{r}
+par(mfrow=c(2,2))
+```
+
+Create residual plots for simple and multivariate models
+```{r}
+plot(my_model1)
+plot(my_model21)
+
+```
+
+
+The four residual plots show potential problematic cases with the row numbers of the data in the dataset. 
+
+**Residuals versus Fitted values plot** should not show any patterns. This is a case for both investigated models. Few outliers could be fixed on these graphics for both models: observations #35, #56 and #145 are fixed as possible outliers for both regression models. 
+If we see any shape (curve, U-shape), it suggests non-linearity in the data set. If a tunnel shape pattern occur, this means that data suffer from heteroskedansticity, where error terms have non-constant variance. 
+
+**Normality Q-Q plot** is used to determine the normal distribution of errors. It uses standardized values (normal quantile) of residuals. In ideal case this plot should show a straight line. Otherwise the residuals have a non-normal distribution. 
+In both investigated models this plot could be approximated to straight line. Again observations #35, #56 and #145 are fixed as possible outliers. 
+
+**Scale-location plot** is also useful to determine heteroskedansticity. In ideal case it should not show any pattern. In both investigated models this plot does not show any pattern. gain observations #35, #56 and #145 are fixed as possible outliers.
+
+**Residuals versus leverage plot** helps us to find influential cases (i.e., subjects) if any. Not all outliers are influential in linear regression analysis. 
+Unlike the other plots, here patterns are not relevant. We watch out for outlying values at the upper right corner or at the lower right corner. Those spots are the places where cases can be influential against a regression line. Look for cases outside of a dashed line, Cook's distance. When cases are outside of the Cook's distance (meaning they have high Cook's distance scores), the cases are influential to the regression results. The regression results will be altered if we exclude those cases.
+
+In both models there are such cases outside the Cook's distance. 
+For the simple regression model these are observations numbered #35, #56 and #71.  
+The situation is similar for multivariate model. Here the observations numbered #35, #141 and #71 are outside the Cook's distance. 
+We observe that two points are the same for both models - #35 and #71.
+
+The analysis of four residual plots suggest a few points as outliers - #35, #56 and #145 for first 3 plots, and additionally point #71 for simple  model, and #145 for multivariate model.
+If there is some additional information, supporting linear regression for these data, we can just exclude these observations and continue model analysis and investigations. 
+
+Before to make decision about these points we have to check how influential they are on the model by excluding them from data set and performing parameter estimation again. Next we have to compare the summary results and conclude about the impact of these points on parameter estimation.
+
+As we see from residual plots for both simple and multiple regression models, the results are very similar for the single regression **points ~ attitude**, and multiple regression **points ~ attitude + stra**. As including more variables is assumed to be a better approach, the final modeling choice is a multiple regression **points ~ attitude + stra**. 
+
+
+## Useful links
+
+[Meaning of all coefficients, given in summary for linear regression (lm)] http://blog.yhat.com/posts/r-lm-summary.html
+
+[Article about ggplot and ggpairs] http://vita.had.co.nz/papers/gpp.pdf
+
+[Beginners guide to regression] http://blog.hackerearth.com/beginners-guide-regression-analysis-plot-interpretations
+
+[Understanding Diagnostic Plots for Linear Regression Analysis]http://data.library.virginia.edu/diagnostic-plots/
+
+## Link to to the GitHub page, related to my work on this course: 
+
+https://github.com/noykova/IODS-project
