@@ -1,0 +1,328 @@
+
+# Logistic regression
+
+##1. Reading the data 
+
+Here we use modified student alcohol consumption data described [here](https://archive.ics.uci.edu/ml/datasets/STUDENT+ALCOHOL+CONSUMPTION). 
+
+The joined data set used in the analysis exercise combines the two student alcohol consumption data sets. The following adjustments have been made:
+
+ - The variables not used for joining the two data have been combined by averaging (including the grade variables)
+
+ - 'alc_use' is the average of 'Dalc' and 'Walc'
+
+ - 'high_use' is TRUE if 'alc_use' is higher than 2 and FALSE otherwise
+
+
+The R code about wrangling described above is given [here](https://github.com/noykova/IODS-project/blob/master/Data/create_alc.R)
+
+The data are read using the following command:
+
+```{r}
+alc<- read.table("alc.txt", header=TRUE)
+dim(alc)
+str(alc)
+head(alc)
+colnames(alc)
+
+```
+
+## 2. Choice of depending variables, which affect alcohol consumption 
+
+The purpose of this analysis is to study the relationships between **high/low alcohol consumption** and some of the other variables in the data. 
+
+From phisiology is known that the alcohol has different influence on male and females. Therefore we assume **sex** as important dependent variable to be investigated further. 
+
+If the student has a problem with the alcohol, he or she surely will tend to skip the school classes more often. So, the secont dependent variable we choose to be **absence**. 
+
+Alcohol consumption surely will influence the sdudent grades, which quantify the success of study process. Thus we chose the **grades** as third dependent variable.  
+
+
+At this stage we find logical to assume that the alcohol consumption is influenced by the **freetime**. If the students have more free time,they will have more possibilities to go to the parties or to have other activities with alcohol consumption. 
+
+
+## 3. Cross-tabulations, bar plots and box plots for investigating the relationships between alcohol consumptions and the chosen dependent variables. 
+
+### Box plots
+
+The box plot (box, whisker diagram) is a standardized way of displaying the distribution of data based on the five number summary: minimum, first quartile, median, third quartile, and maximum. In the simplest box plot the central rectangle spans the first quartile to the third quartile (the interquartile range or IQR). A segment inside the rectangle shows the median and "whiskers" above and below the box show the locations of the minimum and maximum. Values outside the whiskers can be considered as outliers, unusually distant observations. 
+
+
+Here we use box-plot analyses, provided in DataCamp exercise, and add two additional plots aiming to clarify the influence on free time on alcohol consumptions, grades and absences. 
+
+```{r}
+library(GGally)
+library(ggplot2)
+g1 <- ggplot(alc, aes(x = high_use, y = G3, col=sex))
+g1 + geom_boxplot() + ylab("grade")
+
+```
+
+We see that the distributions of grades for male and female students who have high consumption of alcohol,have different medians and deviations. 
+
+
+
+```{r}
+g2 <- ggplot(alc, aes(x = high_use, y = absences, col=sex)) + ggtitle("Student absences by alcohol consumption and sex")
+
+g2 + geom_boxplot() + ylab("absences")
+
+```
+
+This plot shows that the distributions of absences for male and female students who have high consumption of alcohol, have different medians and deviations. 
+
+
+
+
+```{r}
+g3 <- ggplot(alc, aes(x = high_use, y = G3, col=freetime)) + ggtitle("Student grasdes by alcohol consumption and free time")
+
+g3 + geom_boxplot() + ylab("grades")
+
+```
+
+
+```{r}
+g4 <- ggplot(alc, aes(x = high_use, y = absences, col=freetime)) + ggtitle("Student absences by alcohol consumption and free time")
+
+
+g4 + geom_boxplot() + ylab("absence")
+```
+
+From last two plots we can conclude that the grades and absences for students with different alcohol consumption are influenced by ammount ofstudents free time. 
+
+From these plots becomse clear that it is logical to assume sex, absence, grade and free time as variables, which could be assumed to have high impact on alcohol consumption.
+
+### Bar plots
+
+In previous chapter 2. we have used a plot matix to roughly estimate the dependences between different variables in the model. This was possible because the output variable was continuous. 
+
+Here the output varable high_use is binary and theefore we should explore another techniques. 
+
+Bar plots are one of the most commonly used kind of data visualization. They are used to display numeric values (on the y-axis), for different categories (on the x-axis).
+
+Bar plots need not be based on counts or frequencies. We can create bar plots that represent means, medians, standard deviation. Then we have tuo use the aggregate( ) function and pass the results to the barplot( ) function.
+
+Here we have examined the counts of different variables on y-axes. 
+The grouped plots below present the counts of four dependent variables. The alcohol consumption is given as fill: 
+
+```{r}
+bp <- ggplot(alc, aes(freetime, fill=high_use)) + geom_bar(position="dodge") + 
+  ggtitle("Grouped Barplot of free time counts for high and low alcohol usage")
+bp
+
+bp2 <- ggplot(alc, aes(sex, fill=high_use)) + geom_bar(position="dodge") + 
+  ggtitle("Grouped Barplot of free time counts for high and low alcohol usage")
+bp2
+
+bp3 <- ggplot(alc, aes(absences, fill=high_use)) + geom_bar(position="dodge") + 
+  ggtitle("Grouped Barplot of absence counts for high and low alcohol usage")
+bp3
+
+bp4 <- ggplot(alc, aes(G3, fill=high_use)) + geom_bar(position="dodge") + 
+  ggtitle("Grouped Barplot of grades counts for high and low alcohol usage")
+bp4
+```
+
+The bar graph of free time counts show that the use of alcohol is higer for gigher values of free time values. Az expected for higher number of absences the use of alcohol is higher. 
+
+Next bar plot shows the sependence of grades on high use of alcohol and free time. It is clear that students who have more free time tends to use alcohol and get lower grades. 
+
+```{r}
+b2 <- ggplot(alc, aes(x=high_use, y=G3, fill=freetime)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  ggtitle("Student grasdes by alcohol consumption and free time")
+b2
+
+```
+
+Similar graph is drawn for the abcebses. Here is more clear that the students, who use alcohol have both more free time and bigger number of ancenses. 
+
+```{r}
+#dependence of absences on high_use and sex. 
+b3 <- ggplot(alc, aes(x=high_use, y=absences, fill=freetime)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  ggtitle("Student absences by alcohol consumption and free time")
+# draw the plot
+b3
+```
+
+### Cross-tabulations (contingency table)
+
+Cross tabulations are type of tables in a matrix format that displays the (multivariate) frequency distribution of the variables. They provide a basic picture of the interrelation between two variables and can help find interactions between them.
+
+In CrossTable() function we can control whether row percentages (prop.r), column percentages (prop.c), or table percentages (prop.t) show up by making them TRUE in the call to CrossTable. Chi - square distribution is also shown. 
+
+We construct cross tables for all dependent variables. 
+
+```{r}
+library(descr)
+CrossTable(alc$freetime,alc$high_use, prop.t=TRUE, prop.r=TRUE, prop.c=TRUE)
+```
+
+We again see the dependence between bigger ammount of free time and high consumption of alcohol. 
+
+
+```{r}
+CrossTable(alc$sex,alc$high_use, prop.t=TRUE, prop.r=TRUE, prop.c=TRUE)
+```
+
+We see that consumption of alcohol of male and female students is quite the same. 
+
+
+## 3. Logistic regression
+
+Next we model the output variable high_use as a function of chosen dependent variables using logistic regression. 
+
+Logistic regression is a method for fitting a regression curve,  y = f(x), when y consists of proportions or probabilities, or binary coded (0,1--failure, success) data. When the response is a binary (dichotomous) variable, and x is numeric, logistic regression fits a logistic curve to the relationship between x and y. 
+
+We define the students free time as a factorial variable (it takes values 1-5). 
+The model and results (summary and coefficients) are given using following functions: 
+
+```{r}
+alc$freetime <- factor(alc$freetime)
+m <- glm(high_use ~ G3 + absences+sex+freetime, data = alc, family = "binomial")
+
+summary(m)
+
+coef(m)
+
+```
+
+ The deviance residuals are a measure of model fit. All deoendent variables are statistically significant because their p value  < 0.05. The grades G3 and freetime are less significant than absences and sex. As free time is a factorial variable, and shows significant level only for one category, its overall significance shoudl be investigated further. 
+
+The logistic regression coefficients give the change in the log odds of the outcome for a one unit increase in the predictor variable. 
+
+  - For every one unit change in grades, the log odds of high alcohol consumption (versus non-alcohol consumption) decreases by - 0.07.
+  
+  - For a one unit increase in absences, the log odds of high alcohol consumtion increases by 0.09.
+ 
+  -  The categorial variable for sex have a slightly different interpretation. Male students versus female students changes the log odds of alcohol consumption by 0.88.
+  
+  - The factorial variable for free time have a similar explanation. For example, students with free time labeled as 6, versus students who have less fee time labeled as 2, changes the log odds of alcohol consumption by 0.28.
+
+We can use the confint function to obtain confidence intervals for the coefficient estimates. For logistic models, confidence intervals are based on the profiled log-likelihood function. We can also get confidence intervals based on just the standard errors by using the default method.
+
+
+```{r}
+confint(m)
+```
+
+Confidence intervals using standard errors: 
+
+```{r}
+confint.default(m)
+```
+
+These tables show that confidence intervals for all estimated parameters are acceptable. 
+
+In this model we use one factorial variable (free time), where coefficients denote the difference of each class to this reference class. for investigating the overall effect of this variable we should perform a Wald test (package **aod**, function wald.test). The goal is to test whether the pairwise difference between the coefficient of the reference class and the other class is different from zero or not.
+The order in which the coefficients are given in the table of coefficients is the same as the order of the terms in the model. The argument b of **wald.test** function  supplies the coefficients, while Sigma supplies the variance covariance matrix of the error terms, finally Terms tells R which terms in the model are to be tested, in this case, terms 4, 5, 6 and 7, are the four terms for the levels of students free time.
+
+```{r}
+library(aod)
+wald.test(b = coef(m), Sigma = vcov(m), Terms = 4:7)
+```
+
+The chi-squared test statistic of 19.8, with four degrees of freedom is associated with a p-value of 0.00011 < 0.05 indicating that the overall effect of students free time on alcohol consumption is statistically significant.
+
+We can also exponentiate the coefficients and interpret them as odds-ratios. To get the exponentiated coefficients, we tell R that we want to exponentiate (exp), and that the object we want to exponentiate is called coefficients and it is part of model m (coef(m)). We use the same logic to get odds ratios and their confidence intervals, by exponentiating the confidence intervals from before. To put it all in one table, we use cbind to bind the coefficients and confidence intervals column-wise.
+
+```{r}
+exp(coef(m))
+```
+
+After adding confidence intervals: 
+
+```{r}
+exp(cbind(OR = coef(m), confint(m)))
+```
+
+Now we can say that for a one unit increase in grades G3, the odds of alcohol consumption (versus not consuming alcohol) increase by a factor of 0.93. It has to be noted that the odds ratio for the intercept is not generally interprete.
+
+From the provided analyses in this paragraph we conclude that all involves independent variables - grades, absences, sex and free time of students are statistically significant and therefore no variables shoudl be excluded from moeling the consumptuon of alcohol as dependent variable. 
+
+## 4. Logistic regression model used for predictions. 
+
+Predicted probabilities can be computed for both categorical and continuous predictor variables. The R function **predict()** can be used to predict the alcohl consumption of students. The type = "response" option tells R to output probabilities of the form P(Y=1|X), as opposite to other information such as the logit.
+Here we do not supply another, test data set. Therefore the same training data set is used for computing probabilities to fit the logistic regression model. 
+
+```{r}
+library(dplyr)
+probabilities <- predict(m, type = "response")
+```
+
+Following the DataCamp exercise, we add the predicted probabilities to 'alc': 
+
+```{r}
+alc <- mutate(alc, probability = probabilities)
+```
+
+Use the probabilities to make a prediction of binary variable high_use
+
+```{r}
+alc <- mutate(alc, prediction = probability>0.5)
+```
+
+Tabulate the target variable versus the predictions. The function table() is used to ptoduce a confusion matrix in order to determine hoe many observations were correctly or incorrectly classified. 
+
+```{r}
+table(high_use = alc$high_use, prediction = alc$prediction)
+```
+
+The diagonal elements of confusion matrix indicate correct predictions while off-diagonals show the incorrect predictions. Thus our model correctly predict the student's high alcohol consumption for 28 students and no or low consumption for 249 students. So, all correct predictions are 28 + 249 = 277. The mean() function can be used to compute the fraction of students for which the predictions about the alcohol consumption are correct. When we calculate the relative part of correct predictions = (28+249)/382 = 0.72, we see that the model produces 72% correct predictions. 
+
+
+Next we visualize these results: 
+
+```{r}
+g <- ggplot(alc, aes(x = probability, y = high_use, col=prediction))
+g + geom_point()
+table(high_use = alc$high_use, prediction = alc$prediction)%>%prop.table()%>%addmargins() 
+
+```
+
+From the analyses above we conclude that the model has quite high accuracy (72%), but we should keep in mind that we have not used any additional data. 
+
+Next we define a loss function (mean prediction error) as: 
+
+```{r}
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+```
+
+and call it to compute the average number of wrong predictions in the (training) data
+
+```{r}
+loss_func(class = alc$high_use, prob = alc$probability)
+```
+
+Still the prediction error is low, 27% and thus we can assume this model as a good approximation to data about students alcohol consumptions. 
+Again, this is the ***training*** error rate, which often appears to be too optimistic and tends to underestimate the test error rate. 
+The better approach would be to use only part of the data for training the model, and another part to use as test setting for predicting. The error rate, obtained in this way, will be more realistic and near to the situations in the real life. 
+Finally, we have to note that the simple heuristic strategy for choosing independent variables in this case was successful and the chosen independent variables turned to be significant. 
+
+
+## Used and useful links
+
+Contingency tables  (cross-tabulation), used for preliminary determining dependence of two variables: 
+
+https://en.wikipedia.org/wiki/Contingency_table
+https://www.qualtrics.com/wp-content/uploads/2013/05/Cross-Tabulation-Theory.pdf
+https://qualityandinnovation.com/2015/02/08/contingency-tables-with-gmodels/
+
+Logit regression: 
+http://www.ats.ucla.edu/stat/r/dae/logit.htm
+
+An Introduction to Statistical Learning with Applications in R, Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani,  Springer, 2013:
+http://www-bcf.usc.edu/~gareth/ISL/ 
+
+Cross-Validation for Predictive Analytics Using R:
+https://www.r-bloggers.com/cross-validation-for-predictive-analytics-using-r/ 
+
+
+## Link to to the GitHub page, related to my work on this course: 
+
+https://github.com/noykova/IODS-project
