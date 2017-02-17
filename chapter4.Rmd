@@ -1,0 +1,227 @@
+
+# Clustering and classification
+
+##1. Reading the data
+
+Here we use Boston data from the MASS package in R. The data are described [here](https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/Boston.html). They concern Housing Values in Suburbs of Boston. There are 506 available observations without missing data of 14 housing characteristics. Almost all variables are numerical except two categorical ones - chas, Charles River dummy variable, with values 1 (if tract bounds river) or 0 (otherwise), and rad - the if tract bounds river, which can take 5 different values (1-5). 
+
+In this chapter we use the data about crime rate in the suburbs of Boston for developing classification and clustering models.
+
+
+## 2. Summary and correlation analysis of the Boston data. 
+
+The summary of data and its structure are given as: 
+
+```{r}
+library(MASS)
+library(tidyr); 
+library(dplyr); 
+library(ggplot2)
+library(corrplot)
+
+data("Boston")
+
+str(Boston)
+summary(Boston)
+glimpse(Boston)
+
+```
+
+Preliminary analysis of data is based on: 
+ - plot matrix of variables: 
+ 
+ 
+```{r}
+pairs(Boston)
+library(GGally)
+ggpairs(Boston, diag=list(continuous="density", discrete="bar"), axisLabels="show")
+
+```
+
+ - numerical values of corrrelation matrix: 
+ 
+```{r}
+cor_matrix<-cor(Boston) %>% round(digits =2)
+cor_matrix
+```
+- graphical presentation of correlation matrix using correlogram
+
+```{r}
+library(corrplot)
+corrplot(cor_matrix, method="circle", type = "upper", cl.pos = "b", tl.pos = "d", tl.cex = 0.6)
+```
+In this correlogram code visualization method is "circle" and layout "upper" display upper triangular of the correlation matrix. 
+
+
+From these plots and numerical calculations we see that the crime rate depends significantly (correlation > 0.05) on almost all variables except the dummy variable *chas* (corr = -0.06).The correlation is quite low (|corr|=0.2) between the variables crime rate *crime* and *zn* (proportion of residential land zoned ) and *rm* (average number of rooms per dwelling). All other variables have higher (in absolute value) correlation to crime rate.
+
+We observe also higher correlation between some of the other variables, for example the variable *nox* (nitrogen oxides concentration) is highly correlated (corr >0.6) to *age*, *dis*, *rad*. We do not describe here all highly correlated variables because we focus on crime rate. 
+
+From the matrix plot we observe that only the variable *rm* has near to normal distribution. 
+
+The summary of the data shows that different variables have different ranges, so some rescaling further in the analysis could be reasonable. Therefore we continue applying data standardization. 
+
+
+## 3. Standardization of Boston data
+
+Rescaling of column *x* is provided by subtracting the column means *mean(x)* from the corresponding columns and dividing the difference with standard deviation *sd(x)*.
+
+
+*scale (x)=(x - mean(x))/sd(x)* 
+
+
+Since the Boston data contains only numerical values (also for both categorical variables) we can use the function *scale()* to standardize the whole dataset.
+
+R code for center and standardization of data: 
+```{r}
+boston_scaled <- scale(Boston, center = TRUE, scale = TRUE)
+summary(boston_scaled)
+
+```
+
+We observe that now, after standardization, the mean of all variables is 0, which allow to compare directly the influence of all variables. 
+
+
+## 4. Linear discriminant analysis
+
+Linear discriminant analysis (LDA) is used here to find a linear combination of features which characterizes and separates two or more classes of objects. The resulting combination is used as a linear classifier.
+
+The goal of classification problem is to find a good predictor (expressed as linear combinations of the original variables) for the class *y* of any sample of the same distribution (not necessarily from the training set) given only an observation *x*. The model produces the best possible separation between the different classes. 
+
+As a first step we choose class *y* to be the crime rate in Boston dataset. We use the *cut* function to convert this continuous variable into a categorical. The **breaks** argument to **cut** describes how ranges of numbers are converted to factor values. We provide a vector of values, which values are used to determine the breakpoints. The number of levels of the resultant factor is one less than the number of values in the vector. We define this vector using **quantile()** function, executed on scaled continues variable **crime**. 
+
+
+```{r}
+boston_scaled <- scale(Boston, center = TRUE, scale = TRUE)
+class(boston_scaled)
+boston_scaled <- as.data.frame(boston_scaled)
+scaled_crim <- boston_scaled$crim  
+summary(scaled_crim)
+bins <- quantile(scaled_crim) 
+bins
+crime <- cut(scaled_crim, breaks = bins, labels = c("low", "med_low", "med_high", "high"), include.lowest = TRUE)
+
+```
+
+We look the table of categorical variable **y** to see how many observations are in every class: 
+
+```{r}
+table(crime)
+```
+
+Next we drop the old crime rate variable from the dataset and add the new categorical value to scaled data: 
+
+```{r}
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+boston_scaled <- data.frame(boston_scaled, crime)
+```
+
+Since we like to use the model for prediction, we divide the dataset to train and test data sets, so that 80% of the data belongs to the train set.
+We choose randomly 80% of the rows for the training set, and rest of the data for testing. 
+
+```{r}
+n <- nrow(boston_scaled)
+ind <- sample(n,  size = n * 0.8)
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+```
+
+### LDA modeling using training data
+
+We want to separate the Boston data by crime rate, where the number of classes in C=4, and the number of variables is x = 13. The maximum number of useful discriminant functions that can separate the Boston data by crime rate is the minimum of C-1 and x, which in our case is the minimum of 3 and 13, which is 3. Thus, we can find at most 3 useful discriminant functions to separate the data by crime rate. 
+
+Linear discriminant model on training data produce the following results: 
+
+```{r}
+lda.fit <- lda(crime ~ ., data = train)
+lda.fit
+```
+
+We see the estimated coefficients of all 3 useful discriminant functions LD1, LD2 and LD3. For example The model LD1 is: **y = 0.08*zn + 0.008*indus + ... + 0.19*medv**. Some coefficients in these models are too small, thus suggesting that the significance of corresponding variables could be negligible.
+
+For convenience the values for each discriminant function are scaled so that their mean value is zero and its variance is one.
+
+The "proportion of trace" is the percentage separation achieved by each discriminant function. For our training data we get 94.4% for LD1, 4.17% for LD2, and 1.42% for LD3. 
+
+Next we visualize results by using biplot function. For this purpose we have to transform classes to numeric and add function **lda.arrows** for drawing lda biplot arrows. The argument *dimen* in **plot()** function determines how many discriminants are used. 
+```{r}
+lda.fit <- lda(crime ~ ., data = train)
+
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+classes <- as.numeric(train$crime)
+
+plot(lda.fit, dimen = 2, col = classes, pch = classes)
+lda.arrows(lda.fit, myscale = 2)
+
+```
+
+
+The argument *myscale* in lda.arrows determines the length of arrows. By default, this plots arrows for the first and second axes.
+This LDA biplot shows good separation only about the class marked as "high". All 3 other classes overlap quite a lot. 
+
+### LDA for prediction: use of test data. 
+
+Now the task is to classify and calculate posterior probabilities of LDA model using new, unseen before data. In R this is calculated using a method **predict** for LDA objects. Here we use 20% of all data, which se separated to be test data. 
+In order to analyze the model performance we use cross tabulation and create a table consisting of correct and predicted classes. 
+
+```{r}
+lda.pred <- predict(lda.fit, newdata = test)
+table(correct = test$crime, predicted = lda.pred$class)
+```
+After applying **predict()** method, we use the **table()** function to produce a confusion matrix in order to determine how many observations were correctly or incorrectly classified. We see that (14+20+15+24)/102 = 72% correct predictions for the class, to which a new observation belongs. 
+
+##Distance measures and clustering. K-means algorithm
+
+In clustering the number of classes is unknown, and the data are grouped based on their similarity. Here we apply the oldest *K-clustering* method.
+In order to be able to compare the results we use standardized Boston data. We use the most popular Eucledian distance as a measure how close are the observations. The **dist()** function creates a distance matrix consisting of pairwise distances of the observations. For large datasets its computation is time consuming and can need a lot of space. 
+
+```{r}
+dist_eu <- dist(boston_scaled, method = "euclidean")
+summary(dist_eu)
+```
+
+K-means **kmeans()**is an unsupervised method, that assigns observations to groups or clusters based on similarity of the objects. It takes as an argument the number of clusters to look:
+
+```{r}
+km <-kmeans(dist_eu, centers = 4)
+
+```
+
+One way to determine the number of clusters is to look at how the total of within cluster sum of squares (WCSS) behaves when the number of cluster changes. The optimal number of clusters is achieved when WCSS drops significantly.  
+
+The total within sum of squares **twcss** is defined bellow. K-means produces different results every time, because it randomly assigns the initial cluster centers using the function **set.seed()**.
+The most common choice for the number of clusters is 10. 
+
+
+```{r}
+set.seed(123)
+k_max <- 10
+twcss <- sapply(1:k_max, function(k){kmeans(dist_eu, k)$tot.withinss})
+plot(1:k_max, twcss, type='b')
+km <-kmeans(dist_eu, centers = 2)
+pairs(Boston, col = km$cluster)
+```
+
+The results show that the total within sum of squares drops significantly till k=6. On the last graphics we calculate and plot **kmeans** function for 2 clusters because it is easier to show. It seems that for most pairs the clusters are not clearly separated. Good separated clusters are shown for example for the pair of variables (lstat, age). 
+
+Next we perform LDA after clustering. We use 6 clusters as target classes. The obtained biplot shows that the clustering before LDA does not improve the results. 
+
+
+
+## Used and useful links
+[1. Data standardization](http://rtutorialseries.blogspot.fi/2012/03/r-tutorial-series-centering-variables.html)
+[2. Discriminant Analysis in R](https://rstudio-pubs-static.s3.amazonaws.com/35817_2552e05f1d4e4db8ba87b334101a43da.html)
+[3. Factors in R ](https://www.stat.berkeley.edu/classes/s133/factors.html)
+[4. Biplots for LDA in R](http://stackoverflow.com/questions/17232251/how-can-i-plot-a-biplot-for-lda-in-r)
+[5. K means clustering](https://www.r-bloggers.com/k-means-clustering-in-r/)(https://rpubs.com/FelipeRego/K-Means-Clustering)
+[6. 3D plots using plotly](https://gist.github.com/cpsievert/18b68d0daefbf635fbd3)
+
+
