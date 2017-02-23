@@ -1,7 +1,7 @@
 
-# Logistic regression
+#3. Logistic regression
 
-##1. Reading the data 
+##3.1 Reading the data 
 
 Here we use modified student alcohol consumption data described [here](https://archive.ics.uci.edu/ml/datasets/STUDENT+ALCOHOL+CONSUMPTION). 
 
@@ -27,7 +27,7 @@ colnames(alc)
 
 ```
 
-## 2. Choice of depending variables, which affect alcohol consumption 
+## 3.2. Choice of depending variables, which affect alcohol consumption 
 
 The purpose of this analysis is to study the relationships between **high/low alcohol consumption** and some of the other variables in the data. 
 
@@ -41,7 +41,7 @@ Alcohol consumption surely will influence the sdudent grades, which quantify the
 At this stage we find logical to assume that the alcohol consumption is influenced by the **freetime**. If the students have more free time,they will have more possibilities to go to the parties or to have other activities with alcohol consumption. 
 
 
-## 3. Cross-tabulations, bar plots and box plots for investigating the relationships between alcohol consumptions and the chosen dependent variables. 
+## 3.3. Cross-tabulations, bar plots and box plots for investigating the relationships between alcohol consumptions and the chosen dependent variables. 
 
 ### Box plots
 
@@ -170,7 +170,7 @@ CrossTable(alc$sex,alc$high_use, prop.t=TRUE, prop.r=TRUE, prop.c=TRUE)
 We see that consumption of alcohol of male and female students is quite the same. 
 
 
-## 3. Logistic regression
+## 3.3. Logistic regression
 
 Next we model the output variable high_use as a function of chosen dependent variables using logistic regression. 
 
@@ -242,7 +242,7 @@ Now we can say that for a one unit increase in grades G3, the odds of alcohol co
 
 From the provided analyses in this paragraph we conclude that all involves independent variables - grades, absences, sex and free time of students are statistically significant and therefore no variables shoudl be excluded from moeling the consumptuon of alcohol as dependent variable. 
 
-## 4. Logistic regression model used for predictions. 
+## 3.4. Logistic regression model used for predictions. 
 
 Predicted probabilities can be computed for both categorical and continuous predictor variables. The R function **predict()** can be used to predict the alcohl consumption of students. The type = "response" option tells R to output probabilities of the form P(Y=1|X), as opposite to other information such as the logit.
 Here we do not supply another, test data set. Therefore the same training data set is used for computing probabilities to fit the logistic regression model. 
@@ -307,20 +307,15 @@ Finally, we have to note that the simple heuristic strategy for choosing indepen
 
 ## Used and useful links
 
-Contingency tables  (cross-tabulation), used for preliminary determining dependence of two variables: 
-
-https://en.wikipedia.org/wiki/Contingency_table
+[Contingency tables  (cross-tabulation), used for preliminary determining dependence of two variables] (https://en.wikipedia.org/wiki/Contingency_table
 https://www.qualtrics.com/wp-content/uploads/2013/05/Cross-Tabulation-Theory.pdf
-https://qualityandinnovation.com/2015/02/08/contingency-tables-with-gmodels/
+https://qualityandinnovation.com/2015/02/08/contingency-tables-with-gmodels/)
 
-Logit regression: 
-http://www.ats.ucla.edu/stat/r/dae/logit.htm
+[Logit regression] (http://www.ats.ucla.edu/stat/r/dae/logit.htm)
 
-An Introduction to Statistical Learning with Applications in R, Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani,  Springer, 2013:
-http://www-bcf.usc.edu/~gareth/ISL/ 
+[An Introduction to Statistical Learning with Applications in R, Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani,  Springer, 2013] (http://www-bcf.usc.edu/~gareth/ISL/) 
 
-Cross-Validation for Predictive Analytics Using R:
-https://www.r-bloggers.com/cross-validation-for-predictive-analytics-using-r/ 
+[Cross-Validation for Predictive Analytics Using R](https://www.r-bloggers.com/cross-validation-for-predictive-analytics-using-r/)
 
 
 ## Link to to the GitHub page, related to my work on this course: 

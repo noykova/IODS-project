@@ -1,13 +1,66 @@
 
-# 2.Regression and model validation
+# 5. Dimensionality reduction technique
 
-##2.1. Reading the data 
+##5.1. The data 
 
-Here we use part of the sociological data described [here](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-meta.txt). The data concern learning process of students. The full data consists of 183 observations of 60 variables. After wrangling the data into a format that is easy to analyze we have obtained 166 observations of 7 variables. 
+In this chapter we use **human** data from the United Nations Development Programme, which are originally published [here] (http://hdr.undp.org/en/content/human-development-index-hdi). The data concern so called human development index (HDI) as a criteria for the development of a country. HDI is a summary measure of three main groups of variables about long and healthy life, being knowledgeable and have a decent standard of living.
+Original data include 195 observations of 19 variables. The meaning of all variables is described [Here](https://raw.githubusercontent.com/TuomoNieminen/Helsinki-Open-Data-Science/master/datasets/human_meta.txt). 
+
 
 The wrangling includes the following changes: 
 
-1. The column Attitude in original data is a sum of 10 questions related to students attitude towards statistics, each measured on the Likert scale (1-5). Here we have scaled the combination variable back to the 1-5 scale.
+1. Two new columns are added to "Gender inequality" data: the ratio of Female and Male populations with secondary education in each country. (i.e. edu2F / edu2M), and the second one - the ratio of labour force participation of females and males in each country (i.e. labF / labM). 
+
+2. Next "Gender inequality" and "Human development" datas are joined using the variable Country as the identifier. 
+
+3. The variable GNi is transformed to numeric. Only the columns c("Country", "Edu2.FM", "Labo.FM", "Edu.Exp", "Life.Exp", "GNI", "Mat.Mor", "Ado.Birth", "Parli.F") are selected for further work. 
+
+4. The rows with missing values are removed. The last 10 observations relate to regions instead of countries. Therefore they are removed. 
+
+5. Finally the country names are added as rownames and the corresponding ciolumn is removed from data frame. 
+
+The transformed data involve 155 observations of 8 variables. 
+
+##5.2.Graphical overview of the data and summaries of the variables 
+
+The preliminary treated data look as: 
+
+```{r}
+human= read.csv("human.csv") 
+str(human)
+head(human)
+```
+
+
+Next we use ggpairs() for creating advanced plot matrix. 
+
+```{r}
+library(dplyr)
+library(corrplot)
+library(GGally)
+human_ <- select(human, -X)
+ggpairs(human_, diag=list(continuous="density", discrete="bar"), axisLabels="show")
+```
+
+We see that the only variable which has near to normal distribution is Edu.Exp. It is also highly correlated to almost all other variables. Edu2.FM also shows correlation to the other variables, but the correlation coefficients are smaller comparing to coreesponding correlation coefficients of Edu.Exp. Life.Exp is positevily correlated to GNI, and negatively to Mat.Mor and Ado.Birth. GNI and Math.Mor are also negatively correlated. Math.mor has strong positive correlaton with Ado.Birth. 
+
+More clearly these dependences are shown using corrplot():
+
+```{r}
+cor_matrix<-cor(human_)%>% round(digits =2)
+corrplot(cor_matrix, method="circle", type = "upper", cl.pos = "b", tl.pos = "d", tl.cex = 0.6)
+
+```
+
+
+ 
+
+
+
+
+
+
+The column Attitude in original data is a sum of 10 questions related to students attitude towards statistics, each measured on the Likert scale (1-5). Here we have scaled the combination variable back to the 1-5 scale.
 
 2. Next multiple questions are combined into combination variables so that tree groups of questions related to deep, surface and strategic learning are formed. The columns deep, surf and stra are formed by averaging the corresponding groups of questions. 
 
@@ -26,7 +79,7 @@ str(lrn14)
 
 ```
 
-## 2.2 Graphical overview of the data and summaries of the variables
+## 2. Graphical overview of the data and summaries of the variables
 
 Access the GGally and ggplot2 libraries
 
@@ -89,7 +142,7 @@ From the matrix plot above we observe that Cor(stra, attitude) = 0.0617, Cor(sur
  
 
 
-## 2.3 Multiple regression: summary of results, analyses, conclusions. 
+## 3. Multiple regression: summary of results, analyses, conclusions. 
 
 Regression is a parametric technique used to predict continuous (dependent) variable given a set of independent variables. Mathematically regression uses a linear function to approximate the dependent variable. When there is one dependent variable, we use simple regression. In this task we have to use 3 different dependent variables, which address the problem to multiple regression. 
 
@@ -143,7 +196,7 @@ Adding the regression coefficient for stra has a little bigger than boundary p v
 Therefore we decide to continue with both simple (points ~ attitude) and multiple (points ~ attitude + stra) regression models. 
 
 
-## 2.4 Analyses and interpretation of the model parameters and the multiple R squared of the model. 
+## 4. Analyses and interpretation of the model parameters and the multiple R squared of the model. 
 
 Interpretation of model parameters was provided above, in  section 3. 
 
@@ -161,7 +214,7 @@ xyplot(points ~ attitude, lrn14, grid = TRUE,
 ```
 
 
-## 2.5 Diagnostic plots: Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage.  Model assumptions and their validity
+## 5. Diagnostic plots: Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage.  Model assumptions and their validity
 
 Next we check residual plots and try to understand the pattern and derive actionable insights. 
 
@@ -206,14 +259,13 @@ As we see from residual plots for both simple and multiple regression models, th
 
 ## Useful links
 
-[Meaning of all coefficients, given in summary for linear regression (lm)] (http://blog.yhat.com/posts/r-lm-summary.html)
+[Meaning of all coefficients, given in summary for linear regression (lm)] http://blog.yhat.com/posts/r-lm-summary.html
 
+[Article about ggplot and ggpairs] http://vita.had.co.nz/papers/gpp.pdf
 
-[Article about ggplot and ggpairs] (http://vita.had.co.nz/papers/gpp.pdf)
+[Beginners guide to regression] http://blog.hackerearth.com/beginners-guide-regression-analysis-plot-interpretations
 
-[Beginners guide to regression] (http://blog.hackerearth.com/beginners-guide-regression-analysis-plot-interpretations)
-
-[Understanding Diagnostic Plots for Linear Regression Analysis](http://data.library.virginia.edu/diagnostic-plots/)
+[Understanding Diagnostic Plots for Linear Regression Analysis]http://data.library.virginia.edu/diagnostic-plots/
 
 ## Link to to the GitHub page, related to my work on this course: 
 
