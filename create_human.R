@@ -1,3 +1,5 @@
+#Here Part 1 and Part 2 of data wringling exercise of human data are provided.
+
 #WEEK 4: data wringling exercise Part 1. 
 
 hd <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human_development.csv", stringsAsFactors = F)
@@ -130,6 +132,7 @@ rownames(human_) <- human_$Country
 # remove the Country variable
 human <- select(human_, -Country)
 str(human)
+#The transformed data involves 155 observations of 8 variables. 
 
 #Save the human data in your data folder including the row names
 # export data as *txt file. 
