@@ -1,6 +1,7 @@
 #Here Part 1 and Part 2 of data wringling exercise of human data are provided.
 
 #WEEK 4: data wringling exercise Part 1. 
+library(dplyr)
 
 hd <- read.csv("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human_development.csv", stringsAsFactors = F)
 
