@@ -1,14 +1,14 @@
 
-# Clustering and classification
+#4. Clustering and classification
 
-##1. Reading the data
+##4.1. Reading the data
 
 Here we use Boston data from the MASS package in R. The data are described [here](https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/Boston.html). They concern Housing Values in Suburbs of Boston. There are 506 available observations without missing data of 14 housing characteristics. Almost all variables are numerical except two categorical ones - chas, Charles River dummy variable, with values 1 (if tract bounds river) or 0 (otherwise), and rad - the if tract bounds river, which can take 5 different values (1-5). 
 
 In this chapter we use the data about crime rate in the suburbs of Boston for developing classification and clustering models.
 
 
-## 2. Summary and correlation analysis of the Boston data. 
+## 4.2. Summary and correlation analysis of the Boston data. 
 
 The summary of data and its structure are given as: 
 
@@ -62,7 +62,7 @@ From the matrix plot we observe that only the variable *rm* has near to normal d
 The summary of the data shows that different variables have different ranges, so some rescaling further in the analysis could be reasonable. Therefore we continue applying data standardization. 
 
 
-## 3. Standardization of Boston data
+## 4.3. Standardization of Boston data
 
 Rescaling of column *x* is provided by subtracting the column means *mean(x)* from the corresponding columns and dividing the difference with standard deviation *sd(x)*.
 
@@ -82,7 +82,7 @@ summary(boston_scaled)
 We observe that now, after standardization, the mean of all variables is 0, which allow to compare directly the influence of all variables. 
 
 
-## 4. Linear discriminant analysis
+## 4.4. Linear discriminant analysis
 
 Linear discriminant analysis (LDA) is used here to find a linear combination of features which characterizes and separates two or more classes of objects. The resulting combination is used as a linear classifier.
 
@@ -126,7 +126,7 @@ train <- boston_scaled[ind,]
 test <- boston_scaled[-ind,]
 ```
 
-### LDA modeling using training data
+###4.4.1 LDA modeling using training data
 
 We want to separate the Boston data by crime rate, where the number of classes in C=4, and the number of variables is x = 13. The maximum number of useful discriminant functions that can separate the Boston data by crime rate is the minimum of C-1 and x, which in our case is the minimum of 3 and 13, which is 3. Thus, we can find at most 3 useful discriminant functions to separate the data by crime rate. 
 
@@ -167,7 +167,7 @@ lda.arrows(lda.fit, myscale = 2)
 The argument *myscale* in lda.arrows determines the length of arrows. By default, this plots arrows for the first and second axes.
 This LDA biplot shows good separation only about the class marked as "high". All 3 other classes overlap quite a lot. 
 
-### LDA for prediction: use of test data. 
+###4.4.2 LDA for prediction: use of test data. 
 
 Now the task is to classify and calculate posterior probabilities of LDA model using new, unseen before data. In R this is calculated using a method **predict** for LDA objects. Here we use 20% of all data, which se separated to be test data. 
 In order to analyze the model performance we use cross tabulation and create a table consisting of correct and predicted classes. 
@@ -178,7 +178,7 @@ table(correct = test$crime, predicted = lda.pred$class)
 ```
 After applying **predict()** method, we use the **table()** function to produce a confusion matrix in order to determine how many observations were correctly or incorrectly classified. We see that (14+20+15+24)/102 = 72% correct predictions for the class, to which a new observation belongs. 
 
-##Distance measures and clustering. K-means algorithm
+##5. Distance measures and clustering. K-means algorithm
 
 In clustering the number of classes is unknown, and the data are grouped based on their similarity. Here we apply the oldest *K-clustering* method.
 In order to be able to compare the results we use standardized Boston data. We use the most popular Eucledian distance as a measure how close are the observations. The **dist()** function creates a distance matrix consisting of pairwise distances of the observations. For large datasets its computation is time consuming and can need a lot of space. 

@@ -1,10 +1,9 @@
-
 # 5. Dimensionality reduction technique
 
 ##5.1. The data 
 
-In this chapter we use **human** data from the United Nations Development Programme, which are originally published [here] (http://hdr.undp.org/en/content/human-development-index-hdi). The data concern so called human development index (HDI) as a criteria for the development of a country. HDI is a summary measure of three main groups of variables about long and healthy life, being knowledgeable and have a decent standard of living.
-Original data include 195 observations of 19 variables. The meaning of all variables is described [Here](https://raw.githubusercontent.com/TuomoNieminen/Helsinki-Open-Data-Science/master/datasets/human_meta.txt). 
+In this chapter we use **human** data from the United Nations Development Programme, which are originally published [here](http://hdr.undp.org/en/content/human-development-index-hdi). The data concern so called human development index (HDI) as a criteria for the development of a country. HDI is a summary measure of three main groups of variables about long and healthy life, being knowledgeable and have a decent standard of living.
+Original data include 195 observations of 19 variables. The meaning of all variables is described [here](https://raw.githubusercontent.com/TuomoNieminen/Helsinki-Open-Data-Science/master/datasets/human_meta.txt). 
 
 
 The wrangling includes the following changes: 
@@ -38,235 +37,167 @@ Next we use ggpairs() for creating advanced plot matrix.
 library(dplyr)
 library(corrplot)
 library(GGally)
-human_ <- select(human, -X)
+human_ <- dplyr::select(human, -X)
 ggpairs(human_, diag=list(continuous="density", discrete="bar"), axisLabels="show")
 ```
 
 We see that the only variable which has near to normal distribution is Edu.Exp. It is also highly correlated to almost all other variables. Edu2.FM also shows correlation to the other variables, but the correlation coefficients are smaller comparing to coreesponding correlation coefficients of Edu.Exp. Life.Exp is positevily correlated to GNI, and negatively to Mat.Mor and Ado.Birth. GNI and Math.Mor are also negatively correlated. Math.mor has strong positive correlaton with Ado.Birth. 
 
 More clearly these dependences are shown using corrplot():
-
 ```{r}
 cor_matrix<-cor(human_)%>% round(digits =2)
 corrplot(cor_matrix, method="circle", type = "upper", cl.pos = "b", tl.pos = "d", tl.cex = 0.6)
 
 ```
 
+##5.3.Principal component analysis (PCA) on non- standardized and standardized data.
 
- 
-
-
-
+In this chapter we explore two methods for unsupervised learning - Principal component analysis and correspondence analysis. In the unsupervised learning we have only a set of features X1,X2, . . . , Xp measured on n observations. We do not have an associated response variable Y. Therefore here we are not interesting in the prediction. The goal is to discover interesting relations among the measurements on X1,X2, . . .,Xp. PCA is a tool used for data visualization or data pre-processing before applying methods for supervised learning. Here we apply this technique for dimensionality reduction. It is performed by singular value matrix decomposition method known from linear algebra. The data is transformed to new space with equal or less number of dimensions, called principal components. Principal components are expressed by relationships involving the original features X1,X2, . . .,Xp. Principal components are uncorrelated and each is less important than the previous one in terms of captured variance.
 
 
+###5.3.1 Non standardized data
 
-The column Attitude in original data is a sum of 10 questions related to students attitude towards statistics, each measured on the Likert scale (1-5). Here we have scaled the combination variable back to the 1-5 scale.
-
-2. Next multiple questions are combined into combination variables so that tree groups of questions related to deep, surface and strategic learning are formed. The columns deep, surf and stra are formed by averaging the corresponding groups of questions. 
-
-3. In the original data the variable 'points' denotes the student exam points in a statistics course exam. If the student did not attend an exam, the value of 'points' will be zero. These observations are removed from the data.
-
-Thus the data set, used in this analysis, includes 166 observations of the following variables: gender,age, attitude, deep, stra, surf and points, where gender and age are the gender (F/M) and age of the students, and collected points>0.  
-
-The R code about wrangling described above is given [here](https://github.com/noykova/IODS-project/blob/master/Data/create_learning2014.R)
-
-The data are read using the following command:
-
+First we perform PCA on the not standardized human data.
 ```{r}
-lrn14 <- read.table("learning2014.txt", header=TRUE)
-dim(lrn14)
-str(lrn14)
-
+pca_human <- prcomp(human_)
 ```
 
-## 2. Graphical overview of the data and summaries of the variables
+The results of PCA are visualized using biplots. These are scatter plots where observations are placed on x and y coordinates defined by first two principal components PC1 and PC2. Arrows and labels on these plots represent the connections between original features and principal components. The length of the arrows are proportional to the standard deviations of X1,X2, . . .,Xp. The angle between a feature and a PC axis corresponds to correlation of its arrows. Small angle corresponds to high positive correlation. Analogously the angle between arrows corresponds to the correlation between two features.
 
-Access the GGally and ggplot2 libraries
-
+The biplot of PCA on non-standardized human datais obtain using biplot() function.
 ```{r}
+biplot(pca_human, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"))
+```
 
-library(GGally)
+The points marked in grey are the number of observations, which corresponds to the different countries, while arrows show the standard deviation of the corresponding feature.
+
+It is difficult to analize this plot because the different dimensions of the investigated features. We observed the highest impact on PC1 has the variable GNI. This highest correlation is negative.
+
+
+###5.3.2 Standardized data
+
+Next we apply standardization to X1,X2, . . .,Xp.
+```{r}
+human_std <- scale(human_)
+summary(human_std)
+```
+
+The function scale()=(x-mean(x))/sd(x). Therefore the mean of standardized data is 0, and their standard deviation is 1.
+
+In contrast with linear regression, in which scaling the variables has no effect, here scaling change results.
+
+In linear regression multiplying a variable by a factor of c will lead to multiplication of the corresponding coefficient estimate by a factor of 1/c.
+
+In PCA the situation is different because the different scaling factors will directly influence calculation of each PC components. As we have observed on biplot above, when dimensions are different, the absolute values of variances also differ a lot. Then the first principal component loading vector have a very large loading for GNI, since this variable has the highest variance.
+
+We provide PCA using scaled data.
+```{r}
+pca_human <- prcomp(human_std)
+biplot(pca_human, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"))
+```
+
+After comparing last two biplots we see that the scaling has substantial effect on the results. Because it is undesirable for the principal components obtained to depend on an arbitrary choice of scaling, we typically scale each variable to have standard deviation one before we perform PCA.
+
+The results of last biplot shows that Mat.Mor is highly correlated to PC1, while Parli.F is highly correlated to PC2. We can assume that correlation between these original features is negligible. So, we conclude that PC1 places most of its weight on Mat.Mor, while PC2 places most of its weight on Parli.F. We observe also high correlation between Mat.Mor, Ado.Birth, Edu.Exp, Edu2.FM, Life.Exp and GNi, which was also shown on correlation matrix plot. Here we see that the observations on right hand side of this biplot involve countries, where the maternal mortality ratio and adolescent birth rate are high, but (since the negative correlation) in the same time the Gross National Income per capita, expected years of schooling, the ratio between females and males with at least secondary education, and life expectancy at birth are low. On the left hand side of this biplot we see the opposite situation - the countries where the maternal mortality ratio and adolescent birth rate are low, and in the same time the Gross National Income per capita, expected years of schooling, the ratio between females and males with at least secondary education, and life expectancy at birth are high. On the upper part of this plot we see the countries where the proportion of female and male on the labour market is high, and also the percentage of female presentation in the parliament is high. The opposite situation is observed on the bottom part of this biplot. Therefore we can conclude that the best situation where we expect high human development index is in the countries, which are situated on the left upper side of this biplot.
+
+We take a look on summary of PCA:
+```{r}
+s <- summary(pca_human)
+s
+```
+and round the percetange of variance captured by each PC.
+```{r}
+pca_pr <- round(1*s$importance[2, ]*100, digits = 1)
+pca_pr
+```
+
+Finally we add these percetanges of variance on the biplot
+```{r}
+pc_lab <- paste0(names(pca_pr), " (", pca_pr, "%)")
+biplot(pca_human, cex = c(0.8, 1), col = c("grey40", "deeppink2"), xlab = pc_lab[1], ylab = pc_lab[2])
+```
+
+
+With this new information we have answer to the question how much of the information in human data set is lost by projecting the observations onto the first two principal components? The amount of variance, which is not contained in PC1 + PC2 = 100 - (53,6 + 16,2) = 30,2 %.
+
+
+##5.4 Multiple Correspondence Analysis
+
+In the case of categorical variables dimensionality reduction can be provided using correspondence analysis (CA, n=2 variables) or multiple corresponding analysis (MCA, n>2). MCA is a generalization of PCA and an extension of CA. In this analysis cross tabulation matrices between all variables in the data set are used. The information from cross-tabulations has to be presented in clear graphical form. MCA could be used for example as a pre-processing for clustering.
+
+
+###5.4.1 The data
+
+Here we use tea data from FactoMineR package. We use 6 categorical variables from the whole dataset.
+```{r}
+library(FactoMineR)
+library(tidyr)
 library(ggplot2)
+library(dplyr)
+data("tea")
+keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+tea_time <- dplyr::select(tea, one_of(keep_columns))
+summary(tea_time)
 ```
-
-Next we create a more advanced plot matrix with ggpairs()
-The purpose of this function is to display two grouped data in a plot matrix. Analysis of this plot is used for roughly determining if we have a linear correlation between data. 
 
 ```{r}
-p <- ggpairs(lrn14, mapping = aes(col=gender, alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))
+str(tea_time)
 ```
 
-In this function the elements are: 
+Only variables sugar and lunch are binomial, others express 3 (Tea,how,where) or 4 (How) levels. Therefore MCA approach is feasible for investigating these data.
 
-**mapping** is an aestetic mapping between variables
-**aes** - defines how the variables in the data are mapped via parameters in geom_bar
-
-**col** should be a categorical variable, for which different colors are used.
-
-**alpha** - for large datasets with overlapping the alpha aestetic will make the points more transparent. 
-
-**lower (or upper)** are lists that may contain the variables continuous, combo, discete or na. Each element may be a function or a string. 
-
-**combo** - this option is used either continuous X and categorical Y or categorical X and continuous Y. It could take values box, box-no-facet, dot, dot-no-facet, facetist, facet density, blank. 
-
-If **lower (or upper or diagonal)** lists are supplied, the **combo** option should be presented using a **function(data, mapping)**. If a specific function **fn** needs its parameter set, then the function with its parameters should be of the form **wrap(fn, param1 = val1, param2 = val2)**
-
-**facets** - create a subplot of each group and draw the subplots side by side. 
-
-**facets_wrap** - subplots are paid out horizontally and wrap around. 
-
-**stat_bin** - bins (binwidth) are bars used for representation of categorical data. By default **bins** are 1/30 of the range of data. 
-
-This code produce the following plot: 
-
-```{r fig.width=8, fig.height=6}
-p
-```
-
-The graphs on the diagonal reflect the marginal distributions of the variables.
-
-On the first top row the boxplot of the categorical variable gender depending on each of the other corresponding variables is shown. The marginal distribution of gender shows that the observed female students group is bigger, while male students tend to be a little older, have higher attitude and get a little bit better points. 
-
-The histograms in first column represent dependence of points, surf, stra, deep, attitude and age on categorical variable gender for its two values (M/F) separately. 
-
-The scatter plots under the diagonal represent the dependence of each pair of corresponding variables. As the matrix is symmetric, on the upper part of it the correlation coefficients for every pair and also separated by gender M/F are calculated and shown. 
-
-From the graphics of diaconal elements we see that the marginal distribution of variables stra and deep are very near to normal. 
-
-Thus we can make a hypothesis that the variable points depends on attitude (Cor = 0.437), stra (Cor = 0.146), and surf(Cor = -0.144) because the absolute value of the correlation coefficient is higher for these variables. 
-
-In order to exclude the effect of multicollinearity during next step of multiple regression we check the correlations among the pairs variables, which are candidates for dependen variables. 
-If variables are correlatd, it becomes very difficult for the model to determine the true effect of independent variables on dependent variable. 
-
-From the matrix plot above we observe that Cor(stra, attitude) = 0.0617, Cor(surf,attitude) = -0.176 (quite significant), and Cor(stra,surf) = -0.161 (quite significant). Usually, correlation above 80%  (subjective assumption) is considered higher. Therefore at thi stage we do not consider for removing any variable. 
- 
-
-
-## 3. Multiple regression: summary of results, analyses, conclusions. 
-
-Regression is a parametric technique used to predict continuous (dependent) variable given a set of independent variables. Mathematically regression uses a linear function to approximate the dependent variable. When there is one dependent variable, we use simple regression. In this task we have to use 3 different dependent variables, which address the problem to multiple regression. 
-
-The function lm in R is used for linear reglession. 
-We create a regression model with multiple explanatory variables attitude, stra, surf. The choice of independent variables is based on the analysis in 2. Points is chosen as dependent variable. 
-
+Graphically the date are presented as barplots using ggplot() function.
 ```{r}
-my_model <- lm(points ~ attitude + stra + surf, data = lrn14)
+gather(tea_time) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar()+theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) 
 ```
+The amount of people, who use to drink their tea with sugar is almost the same as the others, who do not put sugar in their tea. Other variables have different number of observations for the different levels. We observe that there are not variable categories with a very low frequency, which could distort MCA analysis.
 
-Print the summary of the model:
-
+Next MCA analysis on the chosen tea data is provided.
 ```{r}
-summary(my_model)
+mca <- MCA(tea_time, graph = FALSE)
 ```
-
-
-From this statistic we observe that the residuals median is quite high(0.51). If the residuals are normally distributed, this indicates that the mean of the difference between the predictions and actual values is close to 0. 
-
-Next we analyse the parameter estimates and their standard errors. The intersect is beta0 value. It's prediction is made by model when all independent variables are set to 0. 
-We observe that the standard error of regression coefficient for surf is bigger than the parameter estimate itself. Also the standard error of regression coefficient for stra is relatively high. 
-
-The last column pf coefficients statistics show the p-value for the corresponding regression coefficient. When p values < 0.05 it is assumed that the corresponding coefficient is significant. We observe p>0.05 for regression coefficients for stra and surf. 
-
-From the analysis of the statistics we observe that variables surf and stra could be excluded from the model. 
-
-Next perform multiple regression for two variables. 
-First include (attitude, stra), and  next - (attitude,surf)
-
-Finally we provide simple regression excluding both stra and surf variables. 
-
+In a correspondence analysis, a crosstabulation table of frequencies is first standardized, so that the relative frequencies across all cells sum to 1.0. The goal of (M)CA is to represent the entries in the table of relative frequencies in terms of the distances between individual rows and/or columns in a low-dimensional space. In the terminology of (M)CA, the row and column totals of the matrix of relative frequencies are called the row mass and column mass.
 ```{r}
-
-my_model21 <- lm(points ~ attitude + stra, data = lrn14)
-
-summary(my_model21)
-
-my_model22 <- lm(points ~ attitude + surf, data = lrn14)
-
-summary(my_model22)
-
-my_model1 <- lm(points ~ attitude, data = lrn14)
-
-summary(my_model1)
-
+summary(mca)
 ```
+MCA results is interpreted as the results from a simple CA.
 
-From the summary of last 3 models we conclude that the multiple regression points ~ attitude + stra could be chosen as pretty good model. 
-Adding the regression coefficient for stra has a little bigger than boundary p value = 0.05, because of which we can include in the multiple regression. On the other hand the standard deviatoon of the estimate is quite big. But F-statistic shows higher value and lower p-value. We remember that the correlation between attitude and stra according the pair plot matrix is low.  
+The first table contains the variances and the percentage of variances retained by each dimension. Eigenvalues correspond to the amount of information retained by each axis. Dimensions are ordered decreasingly and listed according to the amount of variance explained in the solution. Dimension 1 explains the most variance in the solution, followed by dimension 2 till Dimension 11.
 
-Therefore we decide to continue with both simple (points ~ attitude) and multiple (points ~ attitude + stra) regression models. 
+The resulting Table 2 in summary() function contains the coordinates, the contribution and the cos2 (quality of representation [in 0-1]) of the first 10 active individuals on the dimensions 1 and 2.
 
+Table 3 in summary() contains the coordinates, the contribution and the cos2 (quality of representation [in 0-1]) of the first 10 active variable categories on the dimensions 1 and 2. This table contains also a column called v.test. The value of the v.test is generally comprised between 2 and -2. For a given variable category, if the absolute value of the v.test is superior to 2, this means that the coordinate is significantly different from 0. This is a case for almost all variables involved in Dim.1, except the categories alone and other. The absolute value of v.test is less then 2 for category black in Dim.2, and for 5 categories in Dim.3 - green, milk, tea bag, tea bag + unpackaged and unpackaged.
 
-## 4. Analyses and interpretation of the model parameters and the multiple R squared of the model. 
+Table 4 in summary() is categorical variables (eta2): contains the squared correlation between each variable and the dimensions. If the value is close to 1, it indicates a strong link with the variable and dimension. In Dim.1 this is a case for the variables how and where. In other words, from this table we see that the variables how and where are strongly linked to the first and a little bit less to the second dimension, and the variables Tea, How, suger and lunch are more related to the third dimension.
 
-Interpretation of model parameters was provided above, in  section 3. 
+We first see from Table 4 which variables are linked to which dimensions, and then from Table 3 we observe the categories that are linked to the dimensions.
 
-R Square (Coefficient of Determination) is a metric used to determine goodness of model fit. This metric explains the percentage of variance explained by covariates in the model. It ranges between 0 and 1. Usually, higher values are desirable but it depends on the data quality and domain. For example, if the data is noisy, we can accept a model at low R Square values.
-
-R-Squared can be graphically illustrated via plots of observed responses Versus fitted responses. 
-
-For single regression this plot is:
-
-```{r scatterplot, fig.width=8, fig.height=6}
-library(lattice)
-xyplot(points ~ attitude, lrn14, grid = TRUE,
-       scales = list(x = list(log = 10, equispaced.log = FALSE)),
-       type = c("p", "r"), col.line="red")
-```
-
-
-## 5. Diagnostic plots: Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage.  Model assumptions and their validity
-
-Next we check residual plots and try to understand the pattern and derive actionable insights. 
-
-Set graphic output: 
+For further clarifying the MCA results we use graphical representation. MCA scatter plot draws a biplot of individuals and variable categories.
 ```{r}
-par(mfrow=c(2,2))
+plot(mca, invisible=c("ind"), habillage = "quali")
 ```
 
-Create residual plots for simple and multivariate models
-```{r}
-plot(my_model1)
-plot(my_model21)
+MCA factor map is a two dimensional biplot of the active categorical levels. On this plot the distances between levels and the barycenter, and the distance between levels are calculated and shown. These distances provide information about similarity of different categories.
 
-```
+On this biplot only first two dimensions are shown. We observe that the categories Earl Grey, sugar and milk are close to each other, so people who prefer to drink Earl Gray most probably we do it with sugar and milk. There is similarity between unpackaged and tea shop categories, and also between tea bag + unpackaged and chain store + tea shop categories. The category green is alone quite far from the other categories.
 
+##Useful links
 
-The four residual plots show potential problematic cases with the row numbers of the data in the dataset. 
+[PCA explained visually](http://setosa.io/ev/principal-component-analysis/)
 
-**Residuals versus Fitted values plot** should not show any patterns. This is a case for both investigated models. Few outliers could be fixed on these graphics for both models: observations #35, #56 and #145 are fixed as possible outliers for both regression models. 
-If we see any shape (curve, U-shape), it suggests non-linearity in the data set. If a tunnel shape pattern occur, this means that data suffer from heteroskedansticity, where error terms have non-constant variance. 
+[Mathematical tutorial on PCA](https://arxiv.org/pdf/1404.1100.pdf)
 
-**Normality Q-Q plot** is used to determine the normal distribution of errors. It uses standardized values (normal quantile) of residuals. In ideal case this plot should show a straight line. Otherwise the residuals have a non-normal distribution. 
-In both investigated models this plot could be approximated to straight line. Again observations #35, #56 and #145 are fixed as possible outliers. 
+[Biplots in practise](http://www.multivariatestatistics.org/biplots.html)
 
-**Scale-location plot** is also useful to determine heteroskedansticity. In ideal case it should not show any pattern. In both investigated models this plot does not show any pattern. gain observations #35, #56 and #145 are fixed as possible outliers.
+[Correspondence Analysis](https://documents.software.dell.com/statistics/textbook/correspondence-analysis#general)
 
-**Residuals versus leverage plot** helps us to find influential cases (i.e., subjects) if any. Not all outliers are influential in linear regression analysis. 
-Unlike the other plots, here patterns are not relevant. We watch out for outlying values at the upper right corner or at the lower right corner. Those spots are the places where cases can be influential against a regression line. Look for cases outside of a dashed line, Cook's distance. When cases are outside of the Cook's distance (meaning they have high Cook's distance scores), the cases are influential to the regression results. The regression results will be altered if we exclude those cases.
+[The FactoMineR webpage](http://factominer.free.fr/)
 
-In both models there are such cases outside the Cook's distance. 
-For the simple regression model these are observations numbered #35, #56 and #71.  
-The situation is similar for multivariate model. Here the observations numbered #35, #141 and #71 are outside the Cook's distance. 
-We observe that two points are the same for both models - #35 and #71.
+[Filter data with dplyr](https://blog.exploratory.io/filter-data-with-dplyr-76cf5f1a258e#.o7x9uvea7)
 
-The analysis of four residual plots suggest a few points as outliers - #35, #56 and #145 for first 3 plots, and additionally point #71 for simple  model, and #145 for multivariate model.
-If there is some additional information, supporting linear regression for these data, we can just exclude these observations and continue model analysis and investigations. 
-
-Before to make decision about these points we have to check how influential they are on the model by excluding them from data set and performing parameter estimation again. Next we have to compare the summary results and conclude about the impact of these points on parameter estimation.
-
-As we see from residual plots for both simple and multiple regression models, the results are very similar for the single regression **points ~ attitude**, and multiple regression **points ~ attitude + stra**. As including more variables is assumed to be a better approach, the final modeling choice is a multiple regression **points ~ attitude + stra**. 
+[Multiple Correspondence Analysis Essentials: Interpretation and application to investigate the associations between categories of multiple qualitative variables - R software and data mining](http://www.sthda.com/english/wiki/multiple-correspondence-analysis-essentials-interpretation-and-application-to-investigate-the-associations-between-categories-of-multiple-qualitative-variables-r-software-and-data-mining)
 
 
-## Useful links
-
-[Meaning of all coefficients, given in summary for linear regression (lm)] http://blog.yhat.com/posts/r-lm-summary.html
-
-[Article about ggplot and ggpairs] http://vita.had.co.nz/papers/gpp.pdf
-
-[Beginners guide to regression] http://blog.hackerearth.com/beginners-guide-regression-analysis-plot-interpretations
-
-[Understanding Diagnostic Plots for Linear Regression Analysis]http://data.library.virginia.edu/diagnostic-plots/
-
-## Link to to the GitHub page, related to my work on this course: 
+##Link to to the GitHub page, related to my work on this course:
 
 https://github.com/noykova/IODS-project
